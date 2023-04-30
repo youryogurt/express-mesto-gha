@@ -13,10 +13,6 @@ app.get('/', (req, res) => {
   res.send('Hello World!');
 });
 
-app.get('/users', (req, res) => {
-  res.send('Hello World and users!');
-});
-
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
