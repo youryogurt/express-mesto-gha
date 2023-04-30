@@ -26,9 +26,6 @@ mongoose.connect('mongodb://localhost:27017/mestodb', {
   .then(() => console.log('MongoDB connected'))
   .catch((err) => console.log(`MongoDB connection error: ${err}`));
 
-app.use('/users', require('./routes/users'));
-app.use('/cards', require('./routes/cards'));
-
 // temporary authorization solution
 app.use((req, res, next) => {
   req.user = {
@@ -37,3 +34,8 @@ app.use((req, res, next) => {
 
   next();
 });
+
+app.use('/users', require('./routes/users'));
+app.use('/cards', require('./routes/cards'));
+
+app.use('*', (req, res) => res.status(404).send({ message: 'Страница не найдена' }));

@@ -4,8 +4,8 @@ const getAllCards = async (req, res) => {
   try {
     const cards = await Card.find();
     res.status(200).json(cards);
-  } catch (error) {
-    res.status(500).json({ error: 'Ошибка сервера' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
 
@@ -14,8 +14,12 @@ const createCard = async (req, res) => {
   try {
     const newCard = await Card.create({ name, link });
     res.status(200).json(newCard);
-  } catch (error) {
-    res.status(500).json({ error: 'Ошибка сервера' });
+  } catch (err) {
+    if (err.name === 'ValidationError') {
+      res.status(400).json({ message: 'Переданы некорректные данные при создании карточки' });
+    } else {
+      res.status(500).json({ message: err.message });
+    }
   }
 };
 
@@ -24,12 +28,12 @@ const deleteCardById = async (req, res) => {
   try {
     const deletedCard = await Card.findByIdAndDelete(cardId);
     if (!deletedCard) {
-      res.status(404).json({ error: 'Карточка не найдена' });
+      res.status(404).json({ message: 'Карточка с указанным _id не найдена' });
     } else {
       res.status(200).json(deletedCard);
     }
-  } catch (error) {
-    res.status(500).json({ error: 'Ошибка сервера' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
 
@@ -42,12 +46,12 @@ const likeCard = async (req, res) => {
       { new: true },
     ).populate('owner likes');
     if (!card) {
-      res.status(404).json({ error: 'Карточка не найдена' });
+      res.status(404).json({ message: 'Передан несуществующий _id карточки' });
     } else {
       res.status(200).json(card);
     }
-  } catch (error) {
-    res.status(500).json({ error: 'Ошибка сервера' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
 
@@ -64,8 +68,8 @@ const dislikeCard = async (req, res) => {
     } else {
       res.status(200).json(card);
     }
-  } catch (error) {
-    res.status(500).json({ error: 'Ошибка сервера' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
 
