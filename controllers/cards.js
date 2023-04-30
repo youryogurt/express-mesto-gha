@@ -14,7 +14,7 @@ const createCard = async (req, res) => {
   const { name, link } = req.body;
   try {
     const newCard = await Card.create({ name, link });
-    res.status(200).json(newCard);
+    res.status(201).json({ _id: newCard._id });
   } catch (err) {
     if (err.name === 'ValidationError') {
       res.status(400).json({ message: 'Переданы некорректные данные при создании карточки' });
@@ -36,7 +36,7 @@ const deleteCardById = async (req, res) => {
     if (!deletedCard) {
       res.status(404).json({ message: 'Карточка с указанным _id не найдена' });
     } else {
-      res.status(200).json(deletedCard);
+      res.json(deletedCard);
     }
   } catch (err) {
     res.status(500).json({ message: err.message });
