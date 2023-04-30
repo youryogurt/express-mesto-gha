@@ -10,20 +10,39 @@ const getUsers = (req, res) => {
     .catch((err) => res.status(500).send({ message: err.message }));
 };
 
-const getUserById = async (req, res) => {
-  const userId = req.params.id;
-  if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-    return res.status(400).send({ message: 'Некорректный id пользователя' });
-  }
+// const getUserById = async (req, res) => {
+//   const userId = req.params.id;
+//   if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+//     return res.status(400).send({ message: 'Некорректный id пользователя' });
+//   }
 
-  try {
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).send({ message: 'Пользователь по указанному _id не найден' });
-    }
-    return res.send({ data: user });
-  } catch (err) {
-    return res.status(500).send({ message: err.message });
+//   try {
+//     const user = await User.findById(userId);
+//     if (!user) {
+//       return res.status(404).send({ message: 'Пользователь по указанному _id не найден' });
+//     }
+//     return res.send({ data: user });
+//   } catch (err) {
+//     return res.status(500).send({ message: err.message });
+//   }
+// };
+
+const getUserById = (req, res) => {
+  const { userId } = req.params;
+  if (mongoose.Types.ObjectId.isValid(userId)) {
+    User.findById({ _id: userId })
+      .then((user) => {
+        if (user) {
+          res.send({ data: user });
+        } else {
+          res.status(404).send({ message: 'ользователь по указанному _id не найден' });
+        }
+      })
+      .catch((err) => {
+        res.status(500).send({ message: err.message });
+      });
+  } else {
+    res.status(400).send({ message: 'Некорректный id пользователя' });
   }
 };
 
