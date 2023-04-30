@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const User = require('../models/user');
 
 const getUsers = (req, res) => {
@@ -9,17 +10,24 @@ const getUsers = (req, res) => {
     .catch((err) => res.status(500).send({ message: err.message }));
 };
 
-const getUserById = (req, res) => {
-  User.findById(req.params.id)
-    .then((user) => {
-      if (user) res.send({ data: user });
-      else res.status(404).send({ message: 'Пользователь по указанному _id не найден' });
-    })
-    .catch((err) => {
-      if (err.name === 'CastError') res.status(400).send({ message: 'Невалидный id' });
-      else res.status(500).send({ message: err.message });
-    });
+const getUserById = async (req, res) => {
+  const userId = req.params.id;
+  if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+    return res.status(400).send({ message: 'Некорректный id пользователя' });
+  }
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).send({ message: 'Пользователь по указанному _id не найден' });
+    }
+    return res.send({ data: user });
+  } catch (err) {
+    return res.status(500).send({ message: err.message });
+  }
 };
+
+module.exports = { getUserById };
 
 const createUser = (req, res) => {
   const { name, about, avatar } = req.body;
