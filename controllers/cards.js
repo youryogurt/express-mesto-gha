@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Card = require('../models/card');
 
 const getAllCards = async (req, res) => {
@@ -25,6 +26,11 @@ const createCard = async (req, res) => {
 
 const deleteCardById = async (req, res) => {
   const { cardId } = req.params;
+  if (!cardId || !mongoose.Types.ObjectId.isValid(cardId)) {
+    res.status(400).json({ message: 'Некорректный id карточки' });
+    return;
+  }
+
   try {
     const deletedCard = await Card.findByIdAndDelete(cardId);
     if (!deletedCard) {
@@ -64,7 +70,7 @@ const dislikeCard = async (req, res) => {
       { new: true },
     ).populate('owner likes');
     if (!card) {
-      res.status(404).json({ error: 'Карточка не найдена' });
+      res.status(404).json({ message: 'Карточка не найдена' });
     } else {
       res.status(200).json(card);
     }
