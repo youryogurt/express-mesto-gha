@@ -4,7 +4,7 @@ const User = require('../models/user');
 const getUsers = (req, res) => {
   User.find({})
     .then((users) => {
-      res.set('Content-Type', 'application/json');
+      // res.set('Content-Type', 'application/json');
       res.send({ data: users });
     })
     .catch((err) => res.status(500).send({ message: err.message }));
@@ -33,22 +33,19 @@ module.exports = { getUserById };
 
 const createUser = (req, res) => {
   const { name, about, avatar } = req.body;
-  const nameLength = name ? name.length : 0;
-  const aboutLength = about ? about.length : 0;
-
-  if (!name || !about || !avatar) {
-    res.status(400).send({ message: 'Не передано одно из полей' });
-  } else if (nameLength < 2 || nameLength > 30) {
-    res.status(400).send({ message: 'Длина поля name должна быть от 2 до 30 символов' });
-  } else if (aboutLength < 2 || aboutLength > 30) {
-    res.status(400).send({ message: 'Длина поля about должна быть от 2 до 30 символов' });
-  } else {
-    User.create({ name, about, avatar })
-      .then((user) => {
-        res.status(200).send({ user });
-      })
-      .catch((err) => res.status(500).send({ message: err.message }));
-  }
+  User.create({ name, about, avatar })
+    .then((user) => {
+      res.status(200).send({ user });
+    })
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        res.status(400).send({
+          message: 'Переданы некорректные данные при создании пользователя',
+        });
+      } else {
+        res.status(500).send({ message: err.message });
+      }
+    });
 };
 
 const updateUserProfile = (req, res) => {

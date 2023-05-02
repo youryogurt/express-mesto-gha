@@ -1,4 +1,3 @@
-const mongoose = require('mongoose');
 const Card = require('../models/card');
 
 const getAllCards = async (req, res) => {
@@ -16,7 +15,9 @@ const createCard = (req, res) => {
     .then((cards) => res.send({ data: cards }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return res.status(400).send({ message: 'Переданы некорректные данные при создании карточки' });
+        return res.status(400).send({
+          message: 'Переданы некорректные данные при создании карточки',
+        });
       }
       return res.status(500).send({ message: err.message });
     });
@@ -24,67 +25,72 @@ const createCard = (req, res) => {
 
 const deleteCardById = (req, res) => {
   const { cardId } = req.params;
-  if (mongoose.Types.ObjectId.isValid(cardId)) {
-    Card.findByIdAndDelete({ _id: cardId })
-      .then((cards) => {
-        if (cards) {
-          res.send({ data: cards });
-        } else {
-          res.status(404).send({ message: 'Карточка с указанным _id не найдена' });
-        }
-      })
-      .catch((err) => {
+  Card.findByIdAndDelete({ _id: cardId })
+    .then((card) => {
+      if (card) {
+        res.send({ data: card });
+      } else {
+        res
+          .status(404)
+          .send({ message: 'Карточка с указанным _id не найдена' });
+      }
+    })
+    .catch((err) => {
+      if (err.name === 'CastError' || err.name === 'ValidationError') {
+        res.status(400).send({ message: err.message });
+      } else {
         res.status(500).send({ message: err.message });
-      });
-  } else {
-    res.status(400).send({ message: 'Некорректный id карточки' });
-  }
+      }
+    });
 };
 
 const likeCard = (req, res) => {
   const { cardId } = req.params;
-  if (mongoose.Types.ObjectId.isValid(cardId)) {
-    Card.findByIdAndUpdate(
-      cardId,
-      { $addToSet: { likes: req.user._id } },
-      { new: true },
-    )
-      .then((card) => {
-        if (card) {
-          res.send({ data: card });
-        } else {
-          res.status(404).send({ message: 'Передан несуществующий _id карточки' });
-        }
-      })
-      .catch((err) => {
+
+  Card.findByIdAndUpdate(
+    cardId,
+    { $addToSet: { likes: req.user._id } },
+    { new: true }
+  )
+    .then((card) => {
+      if (card) {
+        res.send({ data: card });
+      } else {
+        res
+          .status(404)
+          .send({ message: 'Передан несуществующий _id карточки' });
+      }
+    })
+    .catch((err) => {
+      if (err.name === 'CastError' || err.name === 'ValidationError') {
+        res.status(400).send({ message: 'Переданы некорректные данные' });
+      } else {
         res.status(500).send({ message: err.message });
-      });
-  } else {
-    res.status(400).send({ message: 'Некорректный id карточки' });
-  }
+      }
+    });
 };
 
 const dislikeCard = (req, res) => {
   const { cardId } = req.params;
-  if (mongoose.Types.ObjectId.isValid(cardId)) {
-    Card.findByIdAndUpdate(
-      cardId,
-      { $pull: { likes: req.user._id } },
-      { new: true },
-    )
-      .then((card) => {
-        if (card) {
-          res.send({ data: card });
-        } else {
-          res.status(404).send({ message: 'Карточка не найдена' });
-        }
-      })
-      .catch((err) => {
+  Card.findByIdAndUpdate(
+    cardId,
+    { $pull: { likes: req.user._id } },
+    { new: true },
+  )
+    .then((card) => {
+      if (card) {
+        res.send({ data: card });
+      } else {
+        res.status(404).send({ message: 'Карточка не найдена' });
+      }
+    })
+    .catch((err) => {
+      if (err.name === 'CastError' || err.name === 'ValidationError') {
+        res.status(400).send({ message: 'Некорректные данные' });
+      } else {
         res.status(500).send({ message: err.message });
-      });
-  } else {
-    res.status(400).send({ message: 'Некорректный id карточки' });
-  }
+      }
+    });
 };
 
 module.exports = {
