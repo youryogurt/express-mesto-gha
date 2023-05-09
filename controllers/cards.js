@@ -1,54 +1,61 @@
 const Card = require('../models/card');
 
-const getAllCards = async (req, res) => {
+const BadRequestError = require('../errors/bad-request-err');
+const ForbiddenError = require('../errors/forbidden-err');
+const InternalServerError = require('../errors/internal-server-err');
+const NotFoundError = require('../errors/not-found-err');
+
+const getAllCards = async (req, res, next) => {
   try {
-    const cards = await Card.find();
-    res.status(200).json(cards);
+    const cards = await Card.find({});
+    res.status(200).send(cards);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    next(new InternalServerError('Произошла ошибка на сервере'));
   }
 };
 
-const createCard = (req, res) => {
+const createCard = (req, res, next) => {
   const { name, link } = req.body;
   Card.create({ name, link, owner: req.user._id })
     .then((cards) => res.send({ data: cards }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return res.status(400).send({
-          message: 'Переданы некорректные данные при создании карточки',
-        });
+        next(new BadRequestError('Переданы некорректные данные при создании карточки'));
+      } else {
+        next(new InternalServerError('Произошла ошибка на сервере'));
       }
-      return res.status(500).send({ message: err.message });
     });
 };
 
-const deleteCardById = (req, res) => {
+const deleteCardById = (req, res, next) => {
   const { cardId } = req.params;
   const userId = req.user._id;
   Card.findOne({ _id: cardId, owner: userId })
     .then((card) => {
-      if (!card) {
-        return res.status(403).send({ message: 'Вы не можете удалить эту карточку' });
+      const ownerId = card.owner.toString();
+      if (ownerId !== userId) {
+        throw new ForbiddenError('Вы не можете удалить эту карточку');
       }
       return Card.findByIdAndDelete({ _id: cardId });
     })
     .then((deletedCard) => {
       if (!deletedCard) {
-        return res.status(404).send({ message: 'Карточка с указанным _id не найдена' });
+        return next(new NotFoundError('Карточка с указанным _id не найдена'));
       }
       return res.send({ data: deletedCard });
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(400).send({ message: err.message });
-      } else {
-        res.status(500).send({ message: err.message });
+        return next(new BadRequestError('Некорректный _id карточки'));
       }
+      if (err.statusCode === 403) {
+        return next(new ForbiddenError('Вы не можете удалить эту карточку'));
+      }
+      return next(err);
     });
 };
 
-const likeCard = (req, res) => {
+const likeCard = (req, res, next) => {
   const { cardId } = req.params;
 
   Card.findByIdAndUpdate(
@@ -60,21 +67,19 @@ const likeCard = (req, res) => {
       if (card) {
         res.send({ data: card });
       } else {
-        res
-          .status(404)
-          .send({ message: 'Передан несуществующий _id карточки' });
+        next(new NotFoundError('Карточка по указанному _id не найдена'));
       }
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(400).send({ message: 'Переданы некорректные данные' });
+        next(new BadRequestError('Переданы некорректные данные'));
       } else {
-        res.status(500).send({ message: err.message });
+        next(new InternalServerError('Произошла ошибка на сервере'));
       }
     });
 };
 
-const dislikeCard = (req, res) => {
+const dislikeCard = (req, res, next) => {
   const { cardId } = req.params;
   Card.findByIdAndUpdate(
     cardId,
@@ -85,14 +90,16 @@ const dislikeCard = (req, res) => {
       if (card) {
         res.send({ data: card });
       } else {
-        res.status(404).send({ message: 'Карточка не найдена' });
+        throw new NotFoundError('Карточка не найдена');
       }
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(400).send({ message: 'Некорректные данные' });
+        next(new BadRequestError('Некорректные данные'));
+      } else if (err instanceof NotFoundError) {
+        next(err);
       } else {
-        res.status(500).send({ message: err.message });
+        next(new InternalServerError(err.message));
       }
     });
 };
