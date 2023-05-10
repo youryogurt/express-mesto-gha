@@ -6,6 +6,7 @@ const BadRequestError = require('../errors/bad-request-err');
 const InternalServerError = require('../errors/internal-server-err');
 const NotFoundError = require('../errors/not-found-err');
 const UnauthorizedError = require('../errors/unauthorized-err');
+const ConflictError = require('../errors/conflict-err');
 
 const getUsers = (req, res, next) => {
   User.find({})
@@ -38,6 +39,11 @@ const createUser = (req, res, next) => {
   const {
     name, about, avatar, email, password,
   } = req.body;
+
+  if (!password) {
+    next(new BadRequestError('Необходимо указать пароль'));
+  }
+
   bcrypt.hash(password, 10)
     .then((hash) => User.create({
       name,
@@ -47,11 +53,15 @@ const createUser = (req, res, next) => {
       password: hash,
     }))
     .then((user) => {
-      res.status(200).send({ user });
+      const userWithoutPassword = { ...user.toObject() };
+      delete userWithoutPassword.password;
+      res.status(200).send({ user: userWithoutPassword });
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
         next(new BadRequestError('Переданы некорректные данные при создании пользователя'));
+      } else if (err.code === 11000) {
+        next(new ConflictError('Пользователь с таким email уже существует'));
       } else {
         next(new InternalServerError('Произошла ошибка на сервере'));
       }
@@ -100,6 +110,10 @@ const updateUserAvatar = (req, res, next) => {
 
 const login = (req, res, next) => {
   const { email, password } = req.body;
+  if (!email || !password) {
+    const error = new BadRequestError('Отсутствует обязательное поле почта или пароль');
+    return next(error);
+  }
   return User.findUserByCredentials(email, password)
     .then((user) => {
       const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d' });
@@ -113,6 +127,7 @@ const login = (req, res, next) => {
 const getCurrentUserInfo = (req, res, next) => {
   const userId = req.user._id;
   User.findById(userId)
+    .select('-password')
     .then((user) => {
       if (!user) {
         next(new NotFoundError('Пользователь не найден'));
