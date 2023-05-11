@@ -1,6 +1,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const { errors } = require('celebrate');
 const { login, createUser } = require('./controllers/users');
+const { loginValidation, createUserValidation } = require('./controllers/users');
 const auth = require('./middlewares/auth');
 
 const app = express();
@@ -19,8 +21,10 @@ mongoose.connect('mongodb://localhost:27017/mestodb', {
   .then(() => console.log('MongoDB connected'))
   .catch((err) => console.log(`MongoDB connection error: ${err}`));
 
-app.post('/signin', login);
-app.post('/signup', createUser);
+app.post('/signin', loginValidation, login);
+app.post('/signup', createUserValidation, createUser);
+
+app.use(errors());
 
 app.use(auth);
 
