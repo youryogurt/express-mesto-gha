@@ -2,7 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const { errors } = require('celebrate');
 const { login, createUser } = require('./controllers/users');
-const { loginValidation, createUserValidation } = require('./controllers/users');
+const { loginValidation, createUserValidation } = require('./validation/users');
 const auth = require('./middlewares/auth');
 
 const app = express();
