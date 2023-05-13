@@ -52,11 +52,13 @@ const createUser = (req, res, next) => {
       email,
       password: hash,
     }))
-    .then((user) => {
-      const userWithoutPassword = { ...user.toObject() };
-      delete userWithoutPassword.password;
-      res.status(200).send({ user: userWithoutPassword });
-    })
+    .then(() => res.status(201).send(
+      {
+        data: {
+          name, about, avatar, email,
+        },
+      },
+    ))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         next(new BadRequestError('Переданы некорректные данные при создании пользователя'));
