@@ -17,7 +17,7 @@ const router = express.Router();
 
 router.get('/', getAllCards);
 router.post('/', createCardValidation, createCard);
-router.delete('/:cardId', deleteCardById);
+router.delete('/:cardId', cardIdValidation, deleteCardById);
 router.put('/:cardId/likes', cardIdValidation, likeCard);
 router.delete('/:cardId/likes', cardIdValidation, dislikeCard);
 
