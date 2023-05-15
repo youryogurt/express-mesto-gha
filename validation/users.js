@@ -12,7 +12,7 @@ const createUserValidation = celebrate({
 
 const getUserByIdValidation = celebrate({
   params: Joi.object().keys({
-    userId: Joi.string().required().regex(/^[a-fA-F0-9]{24}$/),
+    userId: Joi.string().hex().length(24).required(),
   }),
 });
 
