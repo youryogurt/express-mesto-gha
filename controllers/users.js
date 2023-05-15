@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
+const secretKey = require('../config');
 
 const BadRequestError = require('../errors/bad-request-err');
 const InternalServerError = require('../errors/internal-server-err');
@@ -52,13 +53,14 @@ const createUser = (req, res, next) => {
       email,
       password: hash,
     }))
-    .then(() => res.status(201).send(
-      {
-        data: {
-          name, about, avatar, email,
-        },
-      },
-    ))
+    // .then(() => res.status(201).send(
+    //   {
+    //     name, about, avatar, email,
+    //   },
+    // ))
+    .then((user) => {
+      res.status(201).send({ user });
+    })
     .catch((err) => {
       if (err.name === 'ValidationError') {
         next(new BadRequestError('Переданы некорректные данные при создании пользователя'));
@@ -118,7 +120,7 @@ const login = (req, res, next) => {
   }
   return User.findUserByCredentials(email, password)
     .then((user) => {
-      const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d' });
+      const token = jwt.sign({ _id: user._id }, secretKey, { expiresIn: '7d' });
       res.send({ token });
     })
     .catch(() => {
@@ -129,7 +131,6 @@ const login = (req, res, next) => {
 const getCurrentUserInfo = (req, res, next) => {
   const userId = req.user._id;
   User.findById(userId)
-    .select('-password')
     .then((user) => {
       if (!user) {
         next(new NotFoundError('Пользователь не найден'));

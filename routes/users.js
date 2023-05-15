@@ -1,5 +1,5 @@
 const express = require('express');
-const auth = require('../middlewares/auth');
+// const auth = require('../middlewares/auth');
 
 const {
   getUsers,
@@ -21,6 +21,6 @@ router.get('/', getUsers);
 router.get('/:userId', getUserByIdValidation, getUserById);
 router.patch('/me', updateUserProfileValidation, updateUserProfile);
 router.patch('/me/avatar', updateAvatarValidation, updateUserAvatar);
-router.get('/me', auth, getCurrentUserInfo);
+router.get('/me', getCurrentUserInfo);
 
 module.exports = router;
