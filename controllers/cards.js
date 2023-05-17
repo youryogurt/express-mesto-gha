@@ -8,7 +8,7 @@ const NotFoundError = require('../errors/not-found-err');
 const getAllCards = async (req, res, next) => {
   try {
     const cards = await Card.find({});
-    res.status(200).send(cards);
+    res.send({ data: cards });
   } catch (err) {
     next(new InternalServerError('Произошла ошибка на сервере'));
   }

@@ -6,7 +6,6 @@ const secretKey = require('../config');
 const BadRequestError = require('../errors/bad-request-err');
 const InternalServerError = require('../errors/internal-server-err');
 const NotFoundError = require('../errors/not-found-err');
-const UnauthorizedError = require('../errors/unauthorized-err');
 const ConflictError = require('../errors/conflict-err');
 
 const getUsers = (req, res, next) => {
@@ -40,11 +39,6 @@ const createUser = (req, res, next) => {
   const {
     name, about, avatar, email, password,
   } = req.body;
-
-  if (!password) {
-    next(new BadRequestError('Необходимо указать пароль'));
-  }
-
   bcrypt.hash(password, 10)
     .then((hash) => User.create({
       name,
@@ -111,18 +105,12 @@ const updateUserAvatar = (req, res, next) => {
 
 const login = (req, res, next) => {
   const { email, password } = req.body;
-  if (!email || !password) {
-    const error = new BadRequestError('Отсутствует обязательное поле почта или пароль');
-    return next(error);
-  }
   return User.findUserByCredentials(email, password)
     .then((user) => {
       const token = jwt.sign({ _id: user._id }, secretKey, { expiresIn: '7d' });
       res.send({ token });
     })
-    .catch(() => {
-      next(new UnauthorizedError('Неправильные почта или пароль'));
-    });
+    .catch(next);
 };
 
 const getCurrentUserInfo = (req, res, next) => {

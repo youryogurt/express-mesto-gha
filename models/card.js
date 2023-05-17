@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const urlPattern = require('../constants');
 
 const cardSchema = new mongoose.Schema({
   name: {
@@ -12,7 +13,7 @@ const cardSchema = new mongoose.Schema({
     required: true,
     validate: {
       validator(v) {
-        return /^(ftp|http|https):\/\/[^ "]+$/.test(v);
+        return urlPattern.test(v);
       },
     },
   },
