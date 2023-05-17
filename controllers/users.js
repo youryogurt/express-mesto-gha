@@ -29,7 +29,7 @@ const getUserById = (req, res, next) => {
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        next(new BadRequestError('Некорректный id пользователя'));
+        next(new BadRequestError('Некорректный _id пользователя'));
       } else {
         next(new InternalServerError('Произошла ошибка на сервере'));
       }
@@ -126,18 +126,17 @@ const login = (req, res, next) => {
 };
 
 const getCurrentUserInfo = (req, res, next) => {
-  const userId = req.user._id;
-  User.findById(userId)
+  User.findById(req.user._id)
     .then((user) => {
-      if (!user) {
-        next(new NotFoundError('Пользователь не найден'));
-      } else {
+      if (user) {
         res.send({ data: user });
+      } else {
+        next(new NotFoundError('Пользователь с указанным _id не найден'));
       }
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        next(new BadRequestError('Передан некорректный id пользователя'));
+        next(new BadRequestError('Передан некорректный _id пользователя'));
       } else {
         next(new InternalServerError('Произошла ошибка на сервере'));
       }
